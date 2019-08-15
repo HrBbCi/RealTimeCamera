@@ -215,7 +215,6 @@ public class CameraConnectionFragment extends Fragment {
             return desiredSize;
         }
 
-        // Pick the smallest of those, assuming we found any
         if (bigEnough.size() > 0) {
             final Size chosenSize = Collections.min(bigEnough, new CompareSizesByArea());
             return chosenSize;
@@ -432,14 +431,6 @@ public class CameraConnectionFragment extends Fragment {
         }
     }
 
-    /**
-     * Configures the necessary {@link Matrix} transformation to `mTextureView`. This method should be
-     * called after the camera preview size is determined in setUpCameraOutputs and also the size of
-     * `mTextureView` is fixed.
-     *
-     * @param viewWidth The width of `mTextureView`
-     * @param viewHeight The height of `mTextureView`
-     */
     private void configureTransform(final int viewWidth, final int viewHeight) {
         final Activity activity = getActivity();
         if (null == textureView || null == previewSize || null == activity) {
@@ -466,10 +457,6 @@ public class CameraConnectionFragment extends Fragment {
         textureView.setTransform(matrix);
     }
 
-    /**
-     * Callback for Activities to use to initialize their data once the selected preview size is
-     * known.
-     */
     public interface ConnectionCallback {
         void onPreviewSizeChosen(Size size, int cameraRotation);
     }

@@ -267,13 +267,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         TF_OD_API;
     }
 
-    public void CamClick() {
-        ActivityCompat.requestPermissions(
-                MainActivity.this,
-                new String[]{Manifest.permission.CAMERA},
-                REQUEST_CODE_CAMERA
-        );
-    }
+//    public void CamClick() {
+//        ActivityCompat.requestPermissions(
+//                MainActivity.this,
+//                new String[]{Manifest.permission.CAMERA},
+//                REQUEST_CODE_CAMERA
+//        );
+//    }
 
 
 }

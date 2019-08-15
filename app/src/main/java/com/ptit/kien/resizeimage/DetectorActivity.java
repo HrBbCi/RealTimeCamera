@@ -182,4 +182,9 @@ public class DetectorActivity extends CameraActivity implements OnImageAvailable
     protected void setNumThreads(final int numThreads) {
         runInBackground(() -> detector.setNumThreads(numThreads));
     }
+
+    @Override
+    protected Bitmap saveImage() {
+        return cropCopyBitmap;
+    }
 }

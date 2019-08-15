@@ -1,9 +1,12 @@
 package com.ptit.kien.resizeimage;
 
 import android.Manifest;
+import android.app.Dialog;
 import android.app.Fragment;
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.drawable.BitmapDrawable;
 import android.hardware.Camera;
 import android.hardware.camera2.CameraAccessException;
 import android.hardware.camera2.CameraCharacteristics;
@@ -22,8 +25,11 @@ import android.util.Log;
 import android.util.Size;
 import android.view.Surface;
 import android.view.View;
+import android.view.Window;
 import android.view.WindowManager;
 import android.widget.CompoundButton;
+import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -53,7 +59,8 @@ public abstract class CameraActivity extends AppCompatActivity
     private int yRowStride;
     private Runnable postInferenceCallback;
     private Runnable imageConverter;
-    private TextView tvNum;
+    protected ImageButton ibTakePicture;
+    protected ImageView ivTakeResult;
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
         super.onCreate(null);
@@ -61,6 +68,11 @@ public abstract class CameraActivity extends AppCompatActivity
 
         setContentView(R.layout.activity_camera);
 
+        ibTakePicture = findViewById(R.id.ibTakePicture);
+        ivTakeResult = findViewById(R.id.ivTakeResult);
+
+        ibTakePicture.setOnClickListener(this);
+        ivTakeResult.setOnClickListener(this);
         if (hasPermission()) {
             setFragment();
         } else {
@@ -108,20 +120,12 @@ public abstract class CameraActivity extends AppCompatActivity
         yRowStride = previewWidth;
 
         imageConverter =
-                new Runnable() {
-                    @Override
-                    public void run() {
-                        ImageUtils.convertYUV420SPToARGB8888(bytes, previewWidth, previewHeight, rgbBytes);
-                    }
-                };
+                () -> ImageUtils.convertYUV420SPToARGB8888(bytes, previewWidth, previewHeight, rgbBytes);
 
         postInferenceCallback =
-                new Runnable() {
-                    @Override
-                    public void run() {
-                        camera.addCallbackBuffer(bytes);
-                        isProcessingFrame = false;
-                    }
+                () -> {
+                    camera.addCallbackBuffer(bytes);
+                    isProcessingFrame = false;
                 };
         processImage();
     }
@@ -270,14 +274,12 @@ public abstract class CameraActivity extends AppCompatActivity
         }
     }
 
-    // Returns true if the device supports the required hardware level, or better.
     private boolean isHardwareLevelSupported(
             CameraCharacteristics characteristics, int requiredLevel) {
         int deviceLevel = characteristics.get(CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL);
         if (deviceLevel == CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL_LEGACY) {
             return requiredLevel == deviceLevel;
         }
-        // deviceLevel is not LEGACY, can use numerical sort
         return requiredLevel <= deviceLevel;
     }
 
@@ -287,7 +289,6 @@ public abstract class CameraActivity extends AppCompatActivity
             for (final String cameraId : manager.getCameraIdList()) {
                 final CameraCharacteristics characteristics = manager.getCameraCharacteristics(cameraId);
 
-                // We don't use a front facing camera in this sample.
                 final Integer facing = characteristics.get(CameraCharacteristics.LENS_FACING);
                 if (facing != null && facing == CameraCharacteristics.LENS_FACING_FRONT) {
                     continue;
@@ -300,9 +301,6 @@ public abstract class CameraActivity extends AppCompatActivity
                     continue;
                 }
 
-                // Fallback to camera1 API for internal cameras that don't have full support.
-                // This should help with legacy situations where using the camera2 API causes
-                // distorted or otherwise broken previews.
                 useCamera2API =
                         (facing == CameraCharacteristics.LENS_FACING_EXTERNAL)
                                 || isHardwareLevelSupported(
@@ -322,13 +320,10 @@ public abstract class CameraActivity extends AppCompatActivity
         if (useCamera2API) {
             CameraConnectionFragment camera2Fragment =
                     CameraConnectionFragment.newInstance(
-                            new CameraConnectionFragment.ConnectionCallback() {
-                                @Override
-                                public void onPreviewSizeChosen(final Size size, final int rotation) {
-                                    previewHeight = size.getHeight();
-                                    previewWidth = size.getWidth();
-                                    CameraActivity.this.onPreviewSizeChosen(size, rotation);
-                                }
+                            (size, rotation) -> {
+                                previewHeight = size.getHeight();
+                                previewWidth = size.getWidth();
+                                CameraActivity.this.onPreviewSizeChosen(size, rotation);
                             },
                             this,
                             getLayoutId(),
@@ -344,8 +339,6 @@ public abstract class CameraActivity extends AppCompatActivity
     }
 
     protected void fillBytes(final Plane[] planes, final byte[][] yuvBytes) {
-        // Because of the variable row stride it's not possible to know in
-        // advance the actual necessary dimensions of the yuv planes.
         for (int i = 0; i < planes.length; ++i) {
             final ByteBuffer buffer = planes[i].getBuffer();
             if (yuvBytes[i] == null) {
@@ -383,7 +376,25 @@ public abstract class CameraActivity extends AppCompatActivity
 
     @Override
     public void onClick(View v) {
-
+        switch (v.getId()){
+            case R.id.ibTakePicture:
+                Bitmap bitmap = saveImage();
+                ivTakeResult.setImageBitmap(bitmap);
+                break;
+                case R.id.ivTakeResult:
+                showImage();
+                break;
+        }
+    }
+    private void showImage() {
+        final Dialog dialog = new Dialog(this);
+        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
+        dialog.setContentView(R.layout.dialog_image);
+        final ImageView ivDialog = (ImageView) dialog.findViewById(R.id.ivDialog);
+        BitmapDrawable bitmapDrawable = (BitmapDrawable) ivTakeResult.getDrawable();
+        Bitmap bitmap = bitmapDrawable.getBitmap();
+        ivDialog.setImageBitmap(bitmap);
+        dialog.show();
     }
 
     protected abstract void processImage();
@@ -397,4 +408,6 @@ public abstract class CameraActivity extends AppCompatActivity
     protected abstract void setNumThreads(int numThreads);
 
     protected abstract void setUseNNAPI(boolean isChecked);
+
+    protected abstract Bitmap saveImage();
 }
