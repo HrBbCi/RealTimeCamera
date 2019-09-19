@@ -3,7 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".MainActivity">
+    tools:context=".v2.MainActivity">
     <ScrollView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content">
@@ -29,24 +29,27 @@
                     android:layout_height="300dp" />
 
                 <LinearLayout
-                    android:orientation="horizontal"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content">
+                    android:layout_width="143dp"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+
                     <Button
                         android:id="@+id/btnLoadImage"
-                        android:text="L"
                         android:layout_width="50dp"
-                        android:layout_height="50dp" />
+                        android:layout_height="50dp"
+                        android:text="L" />
+
                     <Button
                         android:id="@+id/btnProcess"
-                        android:text="P"
                         android:layout_width="50dp"
-                        android:layout_height="50dp" />
+                        android:layout_height="50dp"
+                        android:text="P" />
+
                     <Button
                         android:id="@+id/btnCreate"
-                        android:text="C"
                         android:layout_width="50dp"
-                        android:layout_height="50dp" />
+                        android:layout_height="50dp"
+                        android:text="C" />
                 </LinearLayout>
             </LinearLayout>
         </RelativeLayout>
